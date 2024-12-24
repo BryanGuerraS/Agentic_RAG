@@ -19,7 +19,7 @@ vector_store = None
 
 def cargar_documento_en_chroma_db():
     """
-    Carga un documento en ChromaDB, dividiéndolo en fragmentos y creando embeddings.
+    Carga un documento en ChromaDB, dividiéndolo en fragmentos, creando embeddings y almacenandolo en la base de vectores.
 
     Raises:
         FileNotFoundError: Si el archivo del documento no existe.
@@ -28,7 +28,7 @@ def cargar_documento_en_chroma_db():
 
     # Cargar el documento
     try:
-        loader = Docx2txtLoader("archivos/documento.docx")
+        loader = Docx2txtLoader("Documentos de ejemplo/documento.docx")
         data = loader.load()
     except FileNotFoundError:
         raise FileNotFoundError("El archivo 'documento.docx' no fue encontrado.")
@@ -40,22 +40,17 @@ def cargar_documento_en_chroma_db():
         chunk_overlap=128,
         add_start_index=True
     )
-
     all_splits = text_splitter.split_documents(data)
 
-    # Crear embeddings
-    embeddings = CohereEmbeddings(model="embed-english-v3.0")
-
-    # Cargar y persistir en Chroma
-    vector_store = Chroma(
-        collection_name="example_02",
-        embedding_function=embeddings,
-        persist_directory="./chroma_langchain_db"
+    # Creacion de base de datos de vectores 
+    vector_store = Chroma.from_documents(
+        collection_name   = "documentos",
+        documents         = all_splits, 
+        embedding         = CohereEmbeddings(model="embed-english-v3.0"), 
+        persist_directory = './chroma_langchain_db'
     )
 
-    vector_store.add_documents(documents=all_splits)
-    
     print("Documento cargado con éxito en ChromaDB.")
 
-    return vector_store
+    #return vector_store
 

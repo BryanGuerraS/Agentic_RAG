@@ -32,8 +32,7 @@ def startup_event():
     Validar claves y procesar documento al iniciar el servidor.
     """
     load_env_vars()
-    global vector_store 
-    vector_store = cargar_documento_en_chroma_db()
+    cargar_documento_en_chroma_db()
 
 @app.get("/")
 async def root():
@@ -58,4 +57,4 @@ async def consulta(state: SolicitudConsulta):
     """
     Procesa las solicitudes de consulta enviadas mediante POST.
     """
-    return procesar_consulta(state, vector_store)
+    return procesar_consulta(state)

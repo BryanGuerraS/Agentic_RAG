@@ -24,11 +24,27 @@ Funciones principales:
 from langchain_chroma import Chroma
 from app.models import SolicitudConsulta
 from langchain_cohere import ChatCohere
+from langchain_cohere import CohereEmbeddings
 
 # Inicialización del modelo Cohere
 llm = ChatCohere(model="command-r-plus-04-2024", temperature=0)
 
-def retrieve(state: SolicitudConsulta, vector_store:Chroma):
+# Cargando documento de la Base de Vectores
+chroma_local = Chroma(
+    persist_directory="./chroma_langchain_db", 
+    embedding_function=CohereEmbeddings(model="embed-english-v3.0")
+)
+
+def preprocess_docs(docs):
+    seen = set()
+    unique_docs = []
+    for doc in docs:
+        if doc.page_content not in seen:
+            unique_docs.append(doc)
+            seen.add(doc.page_content)
+    return unique_docs
+
+def retrieve(state: SolicitudConsulta):
     """
     Recupera documentos relacionados con la consulta del usuario desde el vector store.
 
@@ -38,8 +54,10 @@ def retrieve(state: SolicitudConsulta, vector_store:Chroma):
     Returns:
         dict: Contexto con los fragmentos de documentos relevantes.
     """
-    retrieved_docs = vector_store.similarity_search(state.question)
-    return {"context": [doc.page_content for doc in retrieved_docs]}
+    retrieved_docs = chroma_local.similarity_search(state.question)
+    filtered_docs = preprocess_docs(retrieved_docs)
+    print(filtered_docs)
+    return {"context": [doc.page_content for doc in filtered_docs]}
 
 def detectar_idioma(state: SolicitudConsulta):
     """
@@ -92,13 +110,13 @@ def generar_respuesta(state: SolicitudConsulta, context: list):
         str: Respuesta generada.
     """
     prompt = """
-    Eres un asistente para tareas de preguntas y respuestas. 
+    Eres un asistente de preguntas y respuestas diseñado para proporcionar respuestas precisas y breves.
+    Usa los fragmentos de contexto recuperados para generar la respuesta. 
+    Si no conoces la respuesta, indica claramente que no la sabes. 
+    Mantén las respuestas en un máximo de una oración y sé conciso.
+    Detecta el idioma en el que se formula la pregunta y responde en el mismo idioma.
+    Añade un emoji al final que resuma o complemente la respuesta.
     Responde siempre en tercera persona.
-    Usa los siguientes fragmentos de contexto recuperados para responder la pregunta. 
-    Si no sabes la respuesta, simplemente di que no sabes. 
-    Usa un máximo de una oración y mantén la respuesta concisa.
-    Agrega emojis al final que resuman la respuesta generada.
-    Genera la respuesta en español.
 
     Pregunta: {question}    
 
@@ -110,6 +128,7 @@ def generar_respuesta(state: SolicitudConsulta, context: list):
         question=state.question, 
         context="\n\n".join(context)
     )
+    #print(context)
     response = llm.invoke(formatted_prompt)
     return response.content
 
@@ -161,7 +180,7 @@ def traducir_respuesta(state: SolicitudConsulta, texto: str, idioma_destino: str
         print(f"Error al traducir con el modelo: {e}")
         return texto  # Devuelve el texto original si hay un fallo
 
-def procesar_consulta(state: SolicitudConsulta, vector_store:Chroma):
+def procesar_consulta(state: SolicitudConsulta):
     """
     Procesa una consulta desde el usuario: recuperar contexto, generar y traducir la respuesta.
 
@@ -171,8 +190,10 @@ def procesar_consulta(state: SolicitudConsulta, vector_store:Chroma):
     Returns:
         dict: Contiene la respuesta generada, ya traducida si es necesario.
     """
-    context_data = retrieve(state, vector_store)
+    context_data = retrieve(state)
+    print(context_data)
     idioma_detectado = detectar_idioma(state)
     respuesta_base = generar_respuesta(state, context_data["context"])
     respuesta_final = traducir_respuesta(state, respuesta_base, idioma_detectado)
+    #respuesta_final = respuesta_base
     return respuesta_final

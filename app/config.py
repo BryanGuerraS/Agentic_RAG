@@ -21,7 +21,6 @@ from dotenv import load_dotenv
 REQUIRED_KEYS = [
     "LANGCHAIN_API_KEY",
     "COHERE_API_KEY",
-    # Agrega aquí más claves si es necesario
 ]
 
 def load_env_vars():
