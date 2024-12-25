@@ -10,7 +10,6 @@ Este módulo realiza las siguientes operaciones:
 Dependencias:
 - langchain_chroma (Chroma): Para búsqueda de similitud en documentos.
 - langchain_cohere (ChatCohere): Para generación de texto y tareas de procesamiento del lenguaje.
-- deep_translator (GoogleTranslator): Para traducción de textos.
 - app.models (SolicitudConsulta): Modelo Pydantic que define la estructura de la consulta.
 
 Funciones principales:
@@ -31,8 +30,9 @@ llm = ChatCohere(model="command-r-plus-04-2024", temperature=0)
 
 # Cargando documento de la Base de Vectores
 chroma_local = Chroma(
-    persist_directory="./chroma_langchain_db", 
-    embedding_function=CohereEmbeddings(model="embed-english-v3.0")
+    collection_name="documentos",
+    embedding_function=CohereEmbeddings(model="embed-multilingual-v2.0"),
+    persist_directory="./chroma_langchain_db"
 )
 
 def preprocess_docs(docs):
@@ -54,10 +54,10 @@ def retrieve(state: SolicitudConsulta):
     Returns:
         dict: Contexto con los fragmentos de documentos relevantes.
     """
-    retrieved_docs = chroma_local.similarity_search(state.question)
+    retrieved_docs = chroma_local.similarity_search(query = state.question, k=3)
     filtered_docs = preprocess_docs(retrieved_docs)
     print(filtered_docs)
-    return {"context": [doc.page_content for doc in filtered_docs]}
+    return {"context": [doc.page_content for doc in retrieved_docs]}
 
 def detectar_idioma(state: SolicitudConsulta):
     """
@@ -172,10 +172,8 @@ def traducir_respuesta(state: SolicitudConsulta, texto: str, idioma_destino: str
     """
     try:
         response = llm.invoke(prompt)
-        return {
-            "user_name": state.user_name,
-            "answer": response.content,
-        }
+        return response.content
+    
     except Exception as e:
         print(f"Error al traducir con el modelo: {e}")
         return texto  # Devuelve el texto original si hay un fallo
@@ -194,6 +192,15 @@ def procesar_consulta(state: SolicitudConsulta):
     print(context_data)
     idioma_detectado = detectar_idioma(state)
     respuesta_base = generar_respuesta(state, context_data["context"])
-    respuesta_final = traducir_respuesta(state, respuesta_base, idioma_detectado)
-    #respuesta_final = respuesta_base
+    
+    if idioma_detectado == "es":
+        respuesta_final = respuesta_base
+    else:
+        respuesta_final = traducir_respuesta(state, respuesta_base, idioma_detectado)
+
+    respuesta_final = {
+        "user_name": state.user_name,
+        "answer": respuesta_final,
+    }
+    
     return respuesta_final

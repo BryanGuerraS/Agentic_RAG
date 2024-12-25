@@ -15,8 +15,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_cohere import CohereEmbeddings
 from langchain_chroma import Chroma
 
-vector_store = None
-
 def cargar_documento_en_chroma_db():
     """
     Carga un documento en ChromaDB, dividiéndolo en fragmentos, creando embeddings y almacenandolo en la base de vectores.
@@ -24,8 +22,6 @@ def cargar_documento_en_chroma_db():
     Raises:
         FileNotFoundError: Si el archivo del documento no existe.
     """
-    global vector_store
-
     # Cargar el documento
     try:
         loader = Docx2txtLoader("Documentos de ejemplo/documento.docx")
@@ -43,12 +39,14 @@ def cargar_documento_en_chroma_db():
     all_splits = text_splitter.split_documents(data)
 
     # Creacion de base de datos de vectores 
-    vector_store = Chroma.from_documents(
+    Chroma.from_documents(
         collection_name   = "documentos",
         documents         = all_splits, 
-        embedding         = CohereEmbeddings(model="embed-english-v3.0"), 
+        embedding         = CohereEmbeddings(model="embed-multilingual-v2.0"), 
         persist_directory = './chroma_langchain_db'
     )
+    
+    #print(vector_store.similarity_search(query = "Quien es Zara?", k=3)) # Solo para test
 
     print("Documento cargado con éxito en ChromaDB.")
 
