@@ -1,4 +1,4 @@
-"""
+""" 
 Módulo principal para inicializar y ejecutar la API de FastAPI.
 
 Estructura del módulo:

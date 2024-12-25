@@ -50,5 +50,3 @@ def cargar_documento_en_chroma_db():
 
     print("Documento cargado con éxito en ChromaDB.")
 
-    #return vector_store
-

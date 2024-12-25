@@ -23,10 +23,14 @@ Funciones principales:
 from langchain_chroma import Chroma
 from app.models import SolicitudConsulta
 from langchain_cohere import ChatCohere
+#from langchain_ollama import ChatOllama
 from langchain_cohere import CohereEmbeddings
 
+
+
 # Inicialización del modelo Cohere
-llm = ChatCohere(model="command-r-plus-04-2024", temperature=0)
+llm = ChatCohere(model="command-r-plus-04-2024", temperature=0) # Modelo más optimizado para RAG según documentación y testeos
+#llm = ChatOllama(model="llama3.2", temperature=0)
 
 # Cargando documento de la Base de Vectores
 chroma_local = Chroma(

@@ -1,5 +1,6 @@
 venv/
 chroma_langchain_db/
 .env
+.gradio
 __pycache__
 NB_Test_01.ipynb
