@@ -20,7 +20,7 @@ Módulos externos utilizados:
 from fastapi import FastAPI
 from app.models import SolicitudConsulta
 from app.config import load_env_vars
-from app.db import cargar_documento_en_chroma_db
+from app.cargar_en_chroma_db import cargar_documento_en_chroma_db
 from app.services import procesar_consulta
 
 # Inicializar la aplicación FastAPI
