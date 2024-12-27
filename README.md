@@ -24,12 +24,16 @@
 ├── config.py               # Gestión y validación de variables de entorno.
 ├── inicializar_db.py       # Inicialización y combinación de documentos preprocesados.
 ├── models.py               # Definición de los modelos de datos.
-📁 documents
-├── preprocessed/           # Documentos ya procesados.
-├── uploaded/               # Documentos cargados por el usuario.
+├── services.py             # Conjunto de funciones para procesar las consultas.
+📁 Archivos de Referencia
+├── Traditional_Rag_vs_Agentic_Rag.gif # Ejemplo de Flujo de proceso en Rag Tradicional y Rag con Agentes.
 📁 chroma_db
 ├── preprocessed/           # Base de datos de embeddings para documentos preprocesados.
 ├── uploaded/               # Base de datos de embeddings para documentos cargados.
+📁 documents
+├── preprocessed/           # Documentos ya procesados.
+├── uploaded/               # Documentos cargados por el usuario.
+📁 images		    # Conjunto de imagenes para el chatbot y de ejemplo.
 Dockerfile                  # Configuración para construir la imagen Docker.
 main.py                     # Archivo principal de la aplicación.
 requirements.txt            # Librerías requeridas.
