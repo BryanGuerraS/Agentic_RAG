@@ -1,10 +1,12 @@
 from app.cargar_en_chroma_db import cargar_documentos_en_chroma_db
+from app.config import load_env_vars
 
 # Inicialización de documentos combinados
 def inicializar_documentos():
     """
     Carga los documentos precargados y los previamente subidos.
     """
+    load_env_vars()
 
     preprocessed_dir = "documents/preprocessed/"
     uploaded_dir = "documents/uploaded/"

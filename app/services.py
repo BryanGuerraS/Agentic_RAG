@@ -23,8 +23,11 @@ import os
 from langchain_chroma import Chroma
 from app.models import SolicitudConsulta
 from langchain_cohere import ChatCohere
+from app.config import load_env_vars
 #from langchain_ollama import ChatOllama
 from langchain_cohere import CohereEmbeddings
+
+load_env_vars()
 
 # Inicialización del modelo Cohere
 llm = ChatCohere(model="command-r-plus-04-2024", temperature=0) # Modelo más optimizado para RAG según documentación y testeos

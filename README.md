@@ -68,7 +68,8 @@ COHERE_API_KEY=tu_clave_aqui
 uvicorn main:app --reload
 ```
 5. Prueba la API
-Prueba la API en: http://127.0.0.1:7860/
+- Prueba la API en: http://127.0.0.1:7860/
+- También se generará un enlace público, que podrás encontrar en el terminal una vez que la aplicación esté en funcionamiento.
 
 ### 3️⃣ Ejecución con Docker
 1. Construye la imagen Docker:
@@ -77,12 +78,11 @@ docker build -t rag_gradio .
 ```
 2. Ejecuta el contenedor:
 ```console
-docker run -p 8000:8000 rag_gradio
+docker run -p 7860:7860 rag_gradio
 ```
 3. Prueba la API:
 - La API estará disponible en: http://127.0.0.1:7860/
-- También se generará un enlace público, que podrás encontrar en el terminal una vez que la aplicación esté en funcionamiento.
-
+- **Nota:** Tal vez no la aparezca ningún mensaje al iniciar el servidor, pero el link se encontrará funcional.
 
 ## 🛠️ Endpoints principales
 ### Principales preguntas:

@@ -6,6 +6,7 @@ from app.services import procesar_consulta
 from app.config import load_env_vars
 from app.inicializar_db import inicializar_documentos
 from app.cargar_en_chroma_db import cargar_documentos_en_chroma_db
+from dotenv import load_dotenv
 
 # Credenciales para autenticación (solo para DEMO)
 USERNAME = "admin"  # Nombre de usuario predeterminado

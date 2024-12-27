@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Expón el puerto en el que se ejecutará la aplicación
-EXPOSE 8000
+EXPOSE 7860
+ENV GRADIO_SERVER_NAME="0.0.0.0"
 
 # Comando para ejecutar la aplicación usando Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "main.py"]
