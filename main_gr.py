@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import gradio as gr
@@ -8,9 +7,9 @@ from app.config import load_env_vars
 from app.inicializar_db import inicializar_documentos
 from app.cargar_en_chroma_db import cargar_documentos_en_chroma_db
 
-# Credenciales para autenticación
-USERNAME = "admin"  # Solo para DEMO
-PASSWORD = "1234"  # Solo para DEMO
+# Credenciales para autenticación (solo para DEMO)
+USERNAME = "admin"  # Nombre de usuario predeterminado
+PASSWORD = "1234"  # Contraseña predeterminada
 
 # Carga de Variables de entorno
 load_env_vars()
@@ -28,23 +27,22 @@ def btn_cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         rag_with_dropdown (str): Dropdown para seleccionar documentos.
     
     Returns:
-        tuple: Estado del chatbot actualizado y lista de archivos cargados.
+        tuple: Estado del chatbot actualizado y lista de documentos actualizada en el dropdown.
     """
     try:
+        # Directorios para almacenar archivos subidos y persistencia en ChromaDB
         upload_dir = "documents/uploaded/"
         persist_dir = "chroma_db/uploaded/"
         
         documentos_cargados = []
 
-        # Guardar archivos en el directorio
+        # Guardar cada archivo en el directorio correspondiente
         for file in files:
             file_name = os.path.basename(file.name)
             file_path = os.path.join(upload_dir, file_name)
-            
-            # Copiar el archivo
-            shutil.copy2(file.name, file_path)
-        
+            shutil.copy2(file.name, file_path) # Copiar el archivo al directorio uploaded
             documentos_cargados.append(file_name)
+
         # Procesar los documentos cargados e indexarlos en ChromaDB
         nuevos_documentos = cargar_documentos_en_chroma_db(
             directory=upload_dir,
@@ -52,49 +50,55 @@ def btn_cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
             flag_nuevo=True
         )
         
+        # Combinar lista de documentos iniciales y nuevos
         lista_documentos_total = lista_documentos_iniciales + nuevos_documentos
 
-        # Mensaje de éxito en formato de tupla
+        # Actualizar historial del chatbot con mensaje de éxito
         chatbot.append({"role": "user", "content": "Cargando documento..."})
         chatbot.append({"role": "assistant", "content": "Documento cargado con éxito. Ya puedes hacerle consultas :)"})
+
+        # Retornar el estado actualizado
         return "", chatbot, gr.Dropdown(choices=lista_documentos_total, value=lista_documentos_total[-1])
     except Exception as e:
-        # Mensaje de error en formato de tupla
+        # Manejo de errores y actualización del chatbot
         chatbot.append({"role": "assistant", "content": f"Error al cargar documento: {str(e)}"})
         return "", chatbot, gr.Dropdown()
     
 # Función para procesar la consulta
 def consultar_llm(question, doc_seleccionado, history, temperature):
     """
-    Procesa la consulta del usuario y devuelve la respuesta.
-    
+    Procesa la consulta del usuario y devuelve la respuesta generada por el modelo LLM.
+
     Parameters:
-        user_name (str): Nombre del usuario.
         question (str): Pregunta del usuario.
-    
+        doc_seleccionado (str): Documento seleccionado en el dropdown.
+        history (List): Historial de interacciones del chatbot.
+        temperature (float): Valor de temperatura para la generación de texto.
+
     Returns:
-        str: Respuesta generada por el backend.
+        tuple: Historial actualizado y texto de la consulta enviada.
     """
+    # Crear instancia de la solicitud de consulta
     state = SolicitudConsulta(
         user_name=USERNAME,
         question=str(question)
     )
 
+    # Procesar la consulta utilizando el servicio configurado
     response = procesar_consulta(state, doc_seleccionado, temperature)
 
-    # Formatear la historia con 'role' y 'content' 
+    # Actualizar el historial con el rol de usuario y asistente
     history.append({"role": "user", "content": question})
     history.append({"role": "assistant", "content": response["answer"]})
     
-    return history, question
+    return history, ""
 
 # Interfaz
 with gr.Blocks() as demo:
     with gr.Tabs():
         with gr.TabItem("RAG Tradicional"):
-            ### Primera Fila
+            # Primera fila: salida del chatbot
             with gr.Row() as row_one:
-                # Respuesta de chatbot
                 with gr.Column() as chatbot_output:
                     chatbot = gr.Chatbot(
                         [],
@@ -103,7 +107,7 @@ with gr.Blocks() as demo:
                         avatar_images=["images/iruma.jpg", "images/openai.png"],
                         type="messages"
                     )
-            ### Segunda Fila | Caja para ingresar el query
+            # Segunda fila: caja de texto para ingresar consultas
             with gr.Row() as row_two:
                 input_txt = gr.Textbox(
                     lines=4,
@@ -112,7 +116,7 @@ with gr.Blocks() as demo:
                     container=False,
                     submit_btn=True
                 )
-            ### Tercera Fila | Caja de botones
+            # Tercera fila: botones y controles adicionales
             with gr.Row() as row_three:
                 text_submit_btn = gr.Button(value="Submit")
                 sidebar_state = gr.State(False)
@@ -126,7 +130,7 @@ with gr.Blocks() as demo:
                 rag_with_dropdown = gr.Dropdown(label="Selecciona documento:", scale=2, choices=lista_documentos_iniciales, value=lista_documentos_iniciales[0])
                 clear_button = gr.ClearButton([input_txt, chatbot])
 
-                # Procedimientos
+                # Configuración de eventos de botones
                 file_msg = upload_btn.upload(
                     fn=btn_cargar_archivo_nuevo, 
                     inputs=[upload_btn, chatbot, rag_with_dropdown], 
@@ -150,7 +154,11 @@ with gr.Blocks() as demo:
                     lambda: gr.Textbox(interactive=True), None, [input_txt], queue=False
                 )
 
+# Lanzar la aplicación con autenticación
+# La opción `share=True` permite compartir la aplicación públicamente durante su ejecución
+# NOTA: No se usarán credenciales planas en producción
+
 demo.launch(
     share=True,
-    auth=[(USERNAME, PASSWORD)]
+    #auth=[(USERNAME, PASSWORD)] # Si se prende la autenticación entonces el link público no funcionará
 )

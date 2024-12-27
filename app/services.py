@@ -51,6 +51,9 @@ def obtener_origen_documento(doc_seleccionado):
 
     Returns:
         str: El origen del documento ('preprocessed' o 'uploaded').
+
+    Raises:
+        FileNotFoundError: Si el documento no se encuentra en las carpetas predefinidas.
     """
     preprocessed_dir = "documents/preprocessed/"
     uploaded_dir = "documents/uploaded/"
@@ -65,6 +68,15 @@ def obtener_origen_documento(doc_seleccionado):
         raise FileNotFoundError(f"El documento {doc_seleccionado} no se encuentra en las carpetas predefinidas.")
 
 def preprocess_docs(docs):
+    """
+    Filtra documentos duplicados basados en su contenido.
+
+    Parameters:
+        docs (list): Lista de documentos recuperados.
+
+    Returns:
+        list: Lista de documentos únicos.
+    """
     seen = set()
     unique_docs = []
     for doc in docs:
@@ -79,6 +91,7 @@ def retrieve(state: SolicitudConsulta, doc_seleccionado:str):
 
     Parameters:
         state (SolicitudConsulta): Contiene la pregunta y el nombre del usuario.
+        doc_seleccionado (str): Nombre del documento seleccionado.
 
     Returns:
         dict: Contexto con los fragmentos de documentos relevantes.
@@ -220,6 +233,8 @@ def procesar_consulta(state: SolicitudConsulta, doc_seleccionado: str, temperatu
 
     Parameters:
         state (SolicitudConsulta): Contiene la consulta del usuario.
+        doc_seleccionado (str): Nombre del documento seleccionado.
+        temperature (float): Parámetro para ajustar la aleatoriedad de las respuestas generadas.
 
     Returns:
         dict: Contiene la respuesta generada, ya traducida si es necesario.
