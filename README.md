@@ -1,12 +1,13 @@
 # 🚀 RAG Tradicional con Langchain y Gradio🌟
-¡Bienvenido al proyecto! 🎉 Este repositorio contiene una implementación de una API que utiliza Gradio para procesar preguntas, buscar texto relevante y generar respuestas utilizando un modelo de lenguaje grande (LLM). La aplicación se integra con Cohere para la generación de embeddings y ChromaDB para la búsqueda de similitudes.
+¡Bienvenido al proyecto! 🎉 Este repositorio contiene una implementación de una API que utiliza Gradio para procesar preguntas, buscar texto relevante y generar respuestas utilizando un modelo de lenguaje grande (LLM). La aplicación se integra con Cohere para la generación de embeddings, ChromaDB para la búsqueda de similitudes y Gradio como interfaz para seleccionar el documento y realizar consultas.
 
 ## 🧠 Principales Insights o Mejoras del Proyecto
-- **Manejo de API Keys en archivo ".env"**: La gestión de las claves de API se realiza de manera segura a través de un archivo `.env`.
-- **Framework de Llama Index y OpenAI para análisis de Chunk Size Ideal**: Se implementó el framework de Llama Index junto con OpenAI para ajustar el tamaño óptimo de los fragmentos (chunks) para la búsqueda de información.
-- **Framework de Langchain y Cohere para el procesamiento de consultas**: Se utiliza Langchain y Cohere para el procesamiento avanzado de consultas.
-- **Actualización del splitter de tamaño fijo a recursivo adicional al overlap**: Se mejoró la forma en que se dividen los documentos, implementando un splitter recursivo con un solapamiento adicional.
-- **Actualización del flujo de trabajo para detectar el idioma y responder en el mismo**: Ahora la API detecta el idioma de las preguntas y responde en el mismo idioma.
+- **Framework de Langchain y Cohere para el procesamiento de consultas**: Langchain y Cohere se emplean para el procesamiento avanzado de consultas, optimizando la interacción con los documentos y generando respuestas precisas basadas en el contenido cargado.
+- **Carga de Archivos mediante Gradio**: La interfaz permite cargar archivos de manera intuitiva usando Gradio, soportando formatos como `.pdf` y `.docx`. Los archivos se indexan automáticamente en ChromaDB para realizar consultas.
+- **Procesamiento de documentos "docx." y "pdf.": Se ha implementado un sistema de carga y procesamiento de documentos `.docx` y `.pdf` de forma eficiente. Los archivos se almacenan en una base de datos para facilitar su consulta posterior.
+- **Interfaz amigable para usuarios No Técnicos**: La interfaz está diseñada para ser simple y accesible, permitiendo que cualquier usuario, sin conocimientos técnicos, pueda cargar documentos y hacer consultas de manera fluida.
+- **Mejora de Embeddings a multilingual**: Se ha mejorado el sistema de embeddings para ofrecer soporte multilingüe, permitiendo consultas en varios idiomas y garantizando una mayor versatilidad en el uso global de la herramienta.
+- **Mejora de llamado de ChromaDB**: Se ha optimizado la manera en que se interactúa con ChromaDB, mejorando la velocidad de indexación y la precisión en las búsquedas, lo que resulta en un rendimiento más rápido y confiable durante las consultas.
 
 
 ## 🌟 Características principales
@@ -38,7 +39,6 @@ requirements.txt            # Librerías requeridas.
 ### 1️⃣ Requisitos previos
 - 🐍 Python 3.9+  
 - 🐳 Docker instalado.  
-- 🧪 Postman o cualquier cliente HTTP para probar la API.
 
 ### 2️⃣ Ejecución local
 1. Clona el repositorio:
@@ -81,8 +81,11 @@ docker run -p 8000:8000 rag_gradio
 
 ## 🛠️ Endpoints principales
 ### Principales preguntas:
-- Procesa una pregunta y genera una respuesta basada en documentos relevantes.
+- Procesa una pregunta y genera una respuesta basado en el documento seleccionado.
+![Ejemplo_01](images/img_example_01.jpg)
 
+- Permite cargar archivos nuevos y cambiar el documento seleccionado.
+![Ejemplo_02](images/img_example_02.jpg)
 
 ```
 
