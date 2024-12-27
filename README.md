@@ -4,7 +4,7 @@
 ## 🧠 Principales Insights o Mejoras del Proyecto
 - **Framework de Langchain y Cohere para el procesamiento de consultas**: Langchain y Cohere se emplean para el procesamiento avanzado de consultas, optimizando la interacción con los documentos y generando respuestas precisas basadas en el contenido cargado.
 - **Carga de Archivos mediante Gradio**: La interfaz permite cargar archivos de manera intuitiva usando Gradio, soportando formatos como `.pdf` y `.docx`. Los archivos se indexan automáticamente en ChromaDB para realizar consultas.
-- **Procesamiento de documentos "docx." y "pdf.": Se ha implementado un sistema de carga y procesamiento de documentos `.docx` y `.pdf` de forma eficiente. Los archivos se almacenan en una base de datos para facilitar su consulta posterior.
+- **Procesamiento de documentos "docx." y "pdf."**: Se ha implementado un sistema de carga y procesamiento de documentos `.docx` y `.pdf` de forma eficiente. Los archivos se almacenan en una base de datos para facilitar su consulta posterior.
 - **Interfaz amigable para usuarios No Técnicos**: La interfaz está diseñada para ser simple y accesible, permitiendo que cualquier usuario, sin conocimientos técnicos, pueda cargar documentos y hacer consultas de manera fluida.
 - **Mejora de Embeddings a multilingual**: Se ha mejorado el sistema de embeddings para ofrecer soporte multilingüe, permitiendo consultas en varios idiomas y garantizando una mayor versatilidad en el uso global de la herramienta.
 - **Mejora de llamado de ChromaDB**: Se ha optimizado la manera en que se interactúa con ChromaDB, mejorando la velocidad de indexación y la precisión en las búsquedas, lo que resulta en un rendimiento más rápido y confiable durante las consultas.
