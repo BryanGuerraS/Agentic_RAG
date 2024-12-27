@@ -81,6 +81,7 @@ docker run -p 8000:8000 rag_gradio
 ```
 3. Prueba la API:
 - La API estará disponible en: http://127.0.0.1:7860/
+- También se generará un enlace público, que podrás encontrar en el terminal una vez que la aplicación esté en funcionamiento.
 
 
 ## 🛠️ Endpoints principales
@@ -91,10 +92,16 @@ docker run -p 8000:8000 rag_gradio
 - Permite cargar archivos nuevos y cambiar el documento seleccionado.
 ![Ejemplo_02](images/img_example_02.jpg)
 
+## 📖 Posibles Mejoras
+- **Limpieza de PDF Adicional**: Implementar un proceso de limpieza más avanzado para los archivos PDF antes de ser cargados, asegurando una mejor calidad en el procesamiento de texto.
+- **Ventana de Principales Fuentes Encontradas**: Añadir una ventana que muestre las principales fuentes documentales encontradas para cada consulta, proporcionando al usuario más contexto y transparencia.
+- **Control del Dropdown al Actualizar la Página**: Mejorar la funcionalidad del dropdown para que, al actualizar la página después de cargar un archivo, los valores se encuentren actualizados, mejorando la experiencia de usuario.
+
 
 ## 📖 Documentación adicional
 - Docker: Este proyecto incluye un archivo Dockerfile que permite desplegar la API rápidamente en un contenedor.
 - Módulos separados: Código modular y bien documentado para facilitar su mantenimiento y escalabilidad.
+
 
 ## 🌍 Contribuciones
 ¡Las contribuciones son bienvenidas! Si encuentras un problema o deseas agregar una mejora, por favor abre un issue o envía un pull request. 🙌
