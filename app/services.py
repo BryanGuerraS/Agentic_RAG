@@ -133,7 +133,7 @@ def detectar_idioma(state: SolicitudConsulta):
     print(f'Idioma detectado: {response.content}')
     return response.content
 
-def generar_respuesta(state: SolicitudConsulta, context: list):
+def generar_respuesta(state: SolicitudConsulta, context: list, temperature: float):
     """
     Genera una respuesta utilizando el contexto recuperado de los documentos.
 
@@ -164,6 +164,7 @@ def generar_respuesta(state: SolicitudConsulta, context: list):
         context="\n\n".join(context)
     )
     #print(context)
+    llm.temperature = temperature
     response = llm.invoke(formatted_prompt)
     return response.content
 
@@ -213,7 +214,7 @@ def traducir_respuesta(state: SolicitudConsulta, texto: str, idioma_destino: str
         print(f"Error al traducir con el modelo: {e}")
         return texto  # Devuelve el texto original si hay un fallo
 
-def procesar_consulta(state: SolicitudConsulta, doc_seleccionado: str):
+def procesar_consulta(state: SolicitudConsulta, doc_seleccionado: str, temperature: float):
     """
     Procesa una consulta desde el usuario: recuperar contexto, generar y traducir la respuesta.
 
@@ -226,7 +227,7 @@ def procesar_consulta(state: SolicitudConsulta, doc_seleccionado: str):
     context_data = retrieve(state, doc_seleccionado)
     print(context_data)
     idioma_detectado = detectar_idioma(state)
-    respuesta_base = generar_respuesta(state, context_data["context"])
+    respuesta_base = generar_respuesta(state, context_data["context"], temperature)
     
     if idioma_detectado == "es":
         respuesta_final = respuesta_base

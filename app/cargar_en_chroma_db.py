@@ -4,7 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_cohere import CohereEmbeddings
 from langchain_chroma import Chroma
 
-def cargar_documentos_en_chroma_db(directory, persist_directory):
+def cargar_documentos_en_chroma_db(directory, persist_directory, flag_nuevo):
     """
     Carga documentos en ChromaDB, los divide en fragmentos, crea embeddings y los almacena en la base de vectores.
 
@@ -40,7 +40,7 @@ def cargar_documentos_en_chroma_db(directory, persist_directory):
         
         # Verificar si el documento ya ha sido cargado 
         if filename in documentos_ya_cargados: 
-            if persist_directory != 'chroma_db/uploaded/':
+            if flag_nuevo == False:
                 lista_documentos.append(filename)
             print(f"Documento ya cargado: {filename}") 
             continue

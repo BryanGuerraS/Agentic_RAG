@@ -28,12 +28,14 @@ def inicializar_documentos():
     # Cargar documentos desde las carpetas predefinidas
     documentos_preprocesados = cargar_documentos_en_chroma_db(
         directory=preprocessed_dir,
-        persist_directory=persist_preprocessed
+        persist_directory=persist_preprocessed,
+        flag_nuevo=False
     )
 
     documentos_cargados = cargar_documentos_en_chroma_db(
         directory=uploaded_dir,
-        persist_directory=persist_uploaded
+        persist_directory=persist_uploaded,
+        flag_nuevo=False
     )
 
     # Combinar ambas listas y devolver
@@ -81,7 +83,8 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         # Procesar los documentos cargados e indexarlos en ChromaDB
         nuevos_documentos = cargar_documentos_en_chroma_db(
             directory=upload_dir,
-            persist_directory=persist_dir
+            persist_directory=persist_dir,
+            flag_nuevo=True
         )
         
         lista_documentos_total = lista_documentos_iniciales + nuevos_documentos
@@ -95,7 +98,7 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         return "", chatbot, gr.Dropdown()
 
 # Función para procesar la consulta
-def consultar_llm(question, doc_seleccionado, history):
+def consultar_llm(question, doc_seleccionado, history, temperature):
     """
     Procesa la consulta del usuario y devuelve la respuesta.
     
@@ -111,7 +114,7 @@ def consultar_llm(question, doc_seleccionado, history):
         question=str(question)
     )
 
-    response = procesar_consulta(state, doc_seleccionado)
+    response = procesar_consulta(state, doc_seleccionado, temperature)
 
     # Formatear la historia con 'role' y 'content' 
     history.append({"role": "user", "content": question})
@@ -120,7 +123,7 @@ def consultar_llm(question, doc_seleccionado, history):
     return history, question
 
 # Interfaz
-with gr.Blocks(css="styles.css") as demo:
+with gr.Blocks() as demo:
     with gr.Tabs():
         with gr.TabItem("RAG Tradicional"):
             ### Primera Fila
@@ -144,6 +147,7 @@ with gr.Blocks(css="styles.css") as demo:
                     scale=8,
                     placeholder="Ingresa un texto y clickea Submit o carga un archivo Word o PDF.",
                     container=False,
+                    interactive=True
                 )
             ### Tercera Fila | Caja de botones
             with gr.Row() as row_three:
@@ -170,16 +174,14 @@ with gr.Blocks(css="styles.css") as demo:
 
                 txt_msg = input_txt.submit(
                     fn=consultar_llm,
-                    inputs=[input_txt, rag_with_dropdown, chatbot],
+                    inputs=[input_txt, rag_with_dropdown, chatbot, temperature_bar],
                     outputs=[chatbot, input_txt],
                     queue=False
-                ).then(
-                    lambda: gr.Textbox(interactive=True), None, [input_txt], queue=False
                 )
 
                 text_submit_btn.click(
                     fn=consultar_llm,
-                    inputs=[input_txt, rag_with_dropdown, chatbot],
+                    inputs=[input_txt, rag_with_dropdown, chatbot, temperature_bar],
                     outputs=[chatbot, input_txt],
                     queue=False
                 ).then(
@@ -187,5 +189,6 @@ with gr.Blocks(css="styles.css") as demo:
                 )
 
 demo.launch(
-    share=False
+    share=False,
+    auth=[(USERNAME, PASSWORD)]
 )
