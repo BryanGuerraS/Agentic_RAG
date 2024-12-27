@@ -1,51 +1,24 @@
-import time
+
 import os
-from typing import List
-from app.models import SolicitudConsulta
-from app.config import load_env_vars
-from app.cargar_en_chroma_db import cargar_documentos_en_chroma_db
-from app.services import procesar_consulta
+import shutil
 import gradio as gr
-import shutil  # Para manejar correctamente la copia de archivos
+from app.models import SolicitudConsulta
+from app.services import procesar_consulta
+from app.config import load_env_vars
+from app.inicializar_db import inicializar_documentos
+from app.cargar_en_chroma_db import cargar_documentos_en_chroma_db
 
 # Credenciales para autenticación
 USERNAME = "admin"  # Solo para DEMO
 PASSWORD = "1234"  # Solo para DEMO
 
-# Cargar Variables de Entorno
+# Carga de Variables de entorno
 load_env_vars()
 
-# Inicialización de documentos combinados
-def inicializar_documentos():
-    """
-    Carga los documentos precargados y los previamente subidos.
-    """
-    preprocessed_dir = "documents/preprocessed/"
-    uploaded_dir = "documents/uploaded/"
-    persist_preprocessed = "chroma_db/preprocessed/"
-    persist_uploaded = "chroma_db/uploaded/"
-
-    # Cargar documentos desde las carpetas predefinidas
-    documentos_preprocesados = cargar_documentos_en_chroma_db(
-        directory=preprocessed_dir,
-        persist_directory=persist_preprocessed,
-        flag_nuevo=False
-    )
-
-    documentos_cargados = cargar_documentos_en_chroma_db(
-        directory=uploaded_dir,
-        persist_directory=persist_uploaded,
-        flag_nuevo=False
-    )
-
-    # Combinar ambas listas y devolver
-    return documentos_preprocesados + documentos_cargados
-
-# Lista inicial global de documentos
+# Carga de documentos iniciales en Preprocessed y Uploaded
 lista_documentos_iniciales = inicializar_documentos()
 
-
-def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
+def btn_cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
     """
     Carga nuevos archivos seleccionados en ChromaDB y actualiza la interfaz con un mensaje de confirmación.
     
@@ -61,25 +34,17 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         upload_dir = "documents/uploaded/"
         persist_dir = "chroma_db/uploaded/"
         
-        # Crear directorio de carga si no existe
-        os.makedirs(upload_dir, exist_ok=True)
-        
         documentos_cargados = []
-        # Mensaje de carga del usuario 
-        chatbot.append({"role": "user", "content": "Cargando documento..."})
 
         # Guardar archivos en el directorio
         for file in files:
             file_name = os.path.basename(file.name)
             file_path = os.path.join(upload_dir, file_name)
             
-            # Usar shutil para copiar correctamente el archivo
-            with open(file.name, "rb") as src_file:
-                with open(file_path, "wb") as dest_file:
-                    shutil.copyfileobj(src_file, dest_file)
-            
-            documentos_cargados.append(file_name)
+            # Copiar el archivo
+            shutil.copy2(file.name, file_path)
         
+            documentos_cargados.append(file_name)
         # Procesar los documentos cargados e indexarlos en ChromaDB
         nuevos_documentos = cargar_documentos_en_chroma_db(
             directory=upload_dir,
@@ -90,13 +55,14 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         lista_documentos_total = lista_documentos_iniciales + nuevos_documentos
 
         # Mensaje de éxito en formato de tupla
+        chatbot.append({"role": "user", "content": "Cargando documento..."})
         chatbot.append({"role": "assistant", "content": "Documento cargado con éxito. Ya puedes hacerle consultas :)"})
-        return "", chatbot, gr.Dropdown(choices=lista_documentos_total, value=lista_documentos_total[0])
+        return "", chatbot, gr.Dropdown(choices=lista_documentos_total, value=lista_documentos_total[-1])
     except Exception as e:
         # Mensaje de error en formato de tupla
         chatbot.append({"role": "assistant", "content": f"Error al cargar documento: {str(e)}"})
         return "", chatbot, gr.Dropdown()
-
+    
 # Función para procesar la consulta
 def consultar_llm(question, doc_seleccionado, history, temperature):
     """
@@ -128,9 +94,6 @@ with gr.Blocks() as demo:
         with gr.TabItem("RAG Tradicional"):
             ### Primera Fila
             with gr.Row() as row_one:
-                # Referencias encontradas
-                # with gr.Column(visible=False) as reference_bar:
-                #    ref_output = gr.Markdown()
                 # Respuesta de chatbot
                 with gr.Column() as chatbot_output:
                     chatbot = gr.Chatbot(
@@ -145,15 +108,14 @@ with gr.Blocks() as demo:
                 input_txt = gr.Textbox(
                     lines=4,
                     scale=8,
-                    placeholder="Ingresa un texto y clickea Submit o carga un archivo Word o PDF.",
+                    placeholder="Ingresa un texto y presiona Shift + Enter para hacer consultas. También puedes cargartu propio archivo Word o PDF :)",
                     container=False,
-                    interactive=True
+                    submit_btn=True
                 )
             ### Tercera Fila | Caja de botones
             with gr.Row() as row_three:
                 text_submit_btn = gr.Button(value="Submit")
                 sidebar_state = gr.State(False)
-                #btn_toggle_sidebar = gr.Button(value="Referencias")
                 upload_btn = gr.UploadButton(
                     "📁 Cargar archivos", file_types=[
                         '.pdf',
@@ -166,7 +128,7 @@ with gr.Blocks() as demo:
 
                 # Procedimientos
                 file_msg = upload_btn.upload(
-                    fn=cargar_archivo_nuevo, 
+                    fn=btn_cargar_archivo_nuevo, 
                     inputs=[upload_btn, chatbot, rag_with_dropdown], 
                     outputs=[input_txt, chatbot, rag_with_dropdown], 
                     queue=True
@@ -189,6 +151,6 @@ with gr.Blocks() as demo:
                 )
 
 demo.launch(
-    share=False,
+    share=True,
     auth=[(USERNAME, PASSWORD)]
 )
