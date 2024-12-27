@@ -1,73 +1,68 @@
-"""
-Módulo de carga de documentos en ChromaDB con LangChain.
-
-Este módulo permite cargar un documento `.docx`, dividirlo en fragmentos adecuados, 
-generar embeddings utilizando Cohere, y almacenarlos en una base de datos vectorial (ChromaDB).
-
-Funcionalidades principales:
-- Carga de un documento de texto en formato `.docx`.
-- División del texto en fragmentos (chunks) utilizando un divisor recursivo.
-- Creación de embeddings mediante el modelo de Cohere.
-- Persistencia de los embeddings en ChromaDB.
-"""
 import os
-from langchain_community.document_loaders import Docx2txtLoader
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import Docx2txtLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_cohere import CohereEmbeddings
 from langchain_chroma import Chroma
 
 def cargar_documentos_en_chroma_db(directory, persist_directory):
     """
-    Carga un documento en ChromaDB, dividiéndolo en fragmentos, creando embeddings y almacenandolo en la base de vectores.
+    Carga documentos en ChromaDB, los divide en fragmentos, crea embeddings y los almacena en la base de vectores.
 
     Raises:
         FileNotFoundError: Si el archivo del documento no existe.
     """
+    if not os.path.exists(directory):
+        raise FileNotFoundError(f"El directorio '{directory}' no existe.")
+    
     # Cargar documentos
     lista_documentos = []
+    documentos_ya_cargados = set()
     contador_doc = 0
 
-    # Recorrer archivos en el directorio
+    vector_store = Chroma(
+        collection_name="documentos", 
+        embedding_function=CohereEmbeddings(model="embed-multilingual-v2.0"), 
+        persist_directory=persist_directory
+    )
+        
+    for doc in vector_store.get()['metadatas']: 
+        documentos_ya_cargados.add(doc['document'])
+    print(documentos_ya_cargados)
+
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
 
         # Verificar si es un archivo PDF o Word
         if filename.endswith(".docx"):
             loader = Docx2txtLoader(file_path)
-            contador_doc += 1
         elif filename.endswith(".pdf"):
             loader = PyPDFLoader(file_path)
-            contador_doc += 1
-        else:
-            print(f"Archivo ignorado (formato no soportado): {filename}")
-            continue
         
+        # Verificar si el documento ya ha sido cargado 
+        if filename in documentos_ya_cargados: 
+            if persist_directory != 'chroma_db/uploaded/':
+                lista_documentos.append(filename)
+            print(f"Documento ya cargado: {filename}") 
+            continue
+
         # Cargar el archivo
         data = loader.load()
-        print("N° documentos cargados:", contador_doc)
+        contador_doc += 1
+        print(f"N° documentos cargados: {contador_doc}")
         lista_documentos.append(filename)
-        print(lista_documentos)
+        
+        # Añadir metadatos al documento y dividir en fragmentos
+        text_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n"],
+            chunk_size=512,
+            chunk_overlap=128,
+            add_start_index=True
+        )
 
-    # Dividir el contenido en fragmentos
-    text_splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n"],
-        chunk_size=512,
-        chunk_overlap=128,
-        add_start_index=True
-    )
-    all_splits = text_splitter.split_documents(data)
-
-    # Creacion de base de datos de vectores 
-    vector_store = Chroma.from_documents(
-        collection_name   = "documentos",
-        documents         = all_splits, 
-        embedding         = CohereEmbeddings(model="embed-multilingual-v2.0"), 
-        persist_directory = persist_directory
-    )
-    
-    #print(vector_store.similarity_search(query = "Quien es Zara?", k=3)) # Solo para test
-    print("N° vectores en vector_store:", vector_store._collection.count(), "\n\n")
-
+        for doc in data:
+            doc.metadata = {"document": filename}
+            print(doc.metadata)
+            splits = text_splitter.split_documents([doc])
+            vector_store.add_documents(splits)
+        
     return lista_documentos
-

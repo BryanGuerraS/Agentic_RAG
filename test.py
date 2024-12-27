@@ -1,19 +1,11 @@
-import gradio as gr
+from langchain_cohere import CohereEmbeddings
+from langchain_chroma import Chroma
 
-def yes_man(message, history):
-    if message.endswith("?"):
-        return "Yes"
-    else:
-        return "Ask me anything!"
-
-gr.ChatInterface(
-    yes_man,
-    type="messages",
-    chatbot=gr.Chatbot(height=300),
-    textbox=gr.Textbox(placeholder="Ask me a yes or no question", container=False, scale=7),
-    title="Yes Man",
-    description="Ask Yes Man any question",
-    theme="ocean",
-    examples=["Hello", "Am I cool?", "Are tomatoes vegetables?"],
-    cache_examples=True,
-).launch()
+chroma_local = Chroma(
+    collection_name="documentos", 
+    embedding_function=CohereEmbeddings(model="embed-multilingual-v2.0"), 
+    persist_directory="chroma_db/preprocessed" 
+) 
+print("holi")
+print(chroma_local)
+print("holi")

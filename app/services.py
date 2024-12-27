@@ -19,25 +19,50 @@ Funciones principales:
 - traducir_respuesta(): Traduce la respuesta generada al idioma especificado.
 - procesar_consulta(): Orquesta todo el flujo: recuperación, generación y traducción.
 """
-
+import os
 from langchain_chroma import Chroma
 from app.models import SolicitudConsulta
 from langchain_cohere import ChatCohere
 #from langchain_ollama import ChatOllama
 from langchain_cohere import CohereEmbeddings
 
-
-
 # Inicialización del modelo Cohere
 llm = ChatCohere(model="command-r-plus-04-2024", temperature=0) # Modelo más optimizado para RAG según documentación y testeos
 #llm = ChatOllama(model="llama3.2", temperature=0)
 
-# Cargando documento de la Base de Vectores
-chroma_local = Chroma(
+chroma_preprocessed = Chroma(
     collection_name="documentos",
-    embedding_function=CohereEmbeddings(model="embed-multilingual-v2.0"),
-    persist_directory="./chroma_langchain_db"
+    embedding_function=CohereEmbeddings(model="embed-multilingual-v2.0"), 
+    persist_directory="chroma_db/preprocessed"
 )
+
+chroma_uploaded = Chroma(
+    collection_name="documentos",
+    embedding_function=CohereEmbeddings(model="embed-multilingual-v2.0"), 
+    persist_directory="chroma_db/uploaded"
+)
+
+def obtener_origen_documento(doc_seleccionado):
+    """
+    Determina el origen del documento (preprocesado o cargado) basado en su ubicación.
+    
+    Parameters:
+        doc_seleccionado (str): Nombre del documento seleccionado.
+
+    Returns:
+        str: El origen del documento ('preprocessed' o 'uploaded').
+    """
+    preprocessed_dir = "documents/preprocessed/"
+    uploaded_dir = "documents/uploaded/"
+
+    if os.path.exists(os.path.join(preprocessed_dir, doc_seleccionado)):
+        #print("Encontré el archivo en preprocesados")
+        return "preprocessed"
+    elif os.path.exists(os.path.join(uploaded_dir, doc_seleccionado)):
+        #print("Encontré el archivo en uploaded")
+        return "uploaded"
+    else:
+        raise FileNotFoundError(f"El documento {doc_seleccionado} no se encuentra en las carpetas predefinidas.")
 
 def preprocess_docs(docs):
     seen = set()
@@ -48,7 +73,7 @@ def preprocess_docs(docs):
             seen.add(doc.page_content)
     return unique_docs
 
-def retrieve(state: SolicitudConsulta):
+def retrieve(state: SolicitudConsulta, doc_seleccionado:str):
     """
     Recupera documentos relacionados con la consulta del usuario desde el vector store.
 
@@ -58,10 +83,16 @@ def retrieve(state: SolicitudConsulta):
     Returns:
         dict: Contexto con los fragmentos de documentos relevantes.
     """
-    retrieved_docs = chroma_local.similarity_search(query = state.question, k=3)
+    origen = obtener_origen_documento(doc_seleccionado) 
+    if origen == "preprocessed":
+        chroma_local = chroma_preprocessed
+    elif origen == "uploaded": 
+        chroma_local = chroma_uploaded
+    else: raise ValueError("Documento seleccionado no tiene un origen válido.")
+    retrieved_docs = chroma_local.similarity_search(query=state.question, k=3, filter={"document": doc_seleccionado})
     filtered_docs = preprocess_docs(retrieved_docs)
     print(filtered_docs)
-    return {"context": [doc.page_content for doc in retrieved_docs]}
+    return {"context": [doc.page_content for doc in filtered_docs]}
 
 def detectar_idioma(state: SolicitudConsulta):
     """
@@ -182,7 +213,7 @@ def traducir_respuesta(state: SolicitudConsulta, texto: str, idioma_destino: str
         print(f"Error al traducir con el modelo: {e}")
         return texto  # Devuelve el texto original si hay un fallo
 
-def procesar_consulta(state: SolicitudConsulta):
+def procesar_consulta(state: SolicitudConsulta, doc_seleccionado: str):
     """
     Procesa una consulta desde el usuario: recuperar contexto, generar y traducir la respuesta.
 
@@ -192,7 +223,7 @@ def procesar_consulta(state: SolicitudConsulta):
     Returns:
         dict: Contiene la respuesta generada, ya traducida si es necesario.
     """
-    context_data = retrieve(state)
+    context_data = retrieve(state, doc_seleccionado)
     print(context_data)
     idioma_detectado = detectar_idioma(state)
     respuesta_base = generar_respuesta(state, context_data["context"])

@@ -6,6 +6,7 @@ from app.config import load_env_vars
 from app.cargar_en_chroma_db import cargar_documentos_en_chroma_db
 from app.services import procesar_consulta
 import gradio as gr
+import shutil  # Para manejar correctamente la copia de archivos
 
 # Credenciales para autenticación
 USERNAME = "admin"  # Solo para DEMO
@@ -14,10 +15,34 @@ PASSWORD = "1234"  # Solo para DEMO
 # Cargar Variables de Entorno
 load_env_vars()
 
-# Cargar data inicial
-lista_documentos_iniciales = cargar_documentos_en_chroma_db(directory="documents/preprocessed/", persist_directory="chroma_db/preprocessed")
+# Inicialización de documentos combinados
+def inicializar_documentos():
+    """
+    Carga los documentos precargados y los previamente subidos.
+    """
+    preprocessed_dir = "documents/preprocessed/"
+    uploaded_dir = "documents/uploaded/"
+    persist_preprocessed = "chroma_db/preprocessed/"
+    persist_uploaded = "chroma_db/uploaded/"
 
-import shutil  # Para manejar correctamente la copia de archivos
+    # Cargar documentos desde las carpetas predefinidas
+    documentos_preprocesados = cargar_documentos_en_chroma_db(
+        directory=preprocessed_dir,
+        persist_directory=persist_preprocessed
+    )
+
+    documentos_cargados = cargar_documentos_en_chroma_db(
+        directory=uploaded_dir,
+        persist_directory=persist_uploaded
+    )
+
+    # Combinar ambas listas y devolver
+    return documentos_preprocesados + documentos_cargados
+
+# Lista inicial global de documentos
+lista_documentos_iniciales = inicializar_documentos()
+
+
 def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
     """
     Carga nuevos archivos seleccionados en ChromaDB y actualiza la interfaz con un mensaje de confirmación.
@@ -37,8 +62,10 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         # Crear directorio de carga si no existe
         os.makedirs(upload_dir, exist_ok=True)
         
-        documentos_subidos = []
-        
+        documentos_cargados = []
+        # Mensaje de carga del usuario 
+        chatbot.append({"role": "user", "content": "Cargando documento..."})
+
         # Guardar archivos en el directorio
         for file in files:
             file_name = os.path.basename(file.name)
@@ -49,7 +76,7 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
                 with open(file_path, "wb") as dest_file:
                     shutil.copyfileobj(src_file, dest_file)
             
-            documentos_subidos.append(file_name)
+            documentos_cargados.append(file_name)
         
         # Procesar los documentos cargados e indexarlos en ChromaDB
         nuevos_documentos = cargar_documentos_en_chroma_db(
@@ -60,11 +87,11 @@ def cargar_archivo_nuevo(files, chatbot, rag_with_dropdown):
         lista_documentos_total = lista_documentos_iniciales + nuevos_documentos
 
         # Mensaje de éxito en formato de tupla
-        chatbot.append(("Cargando documento ...", f"Documento cargado con éxito. Ya puedes hacerle consultas :)"))
+        chatbot.append({"role": "assistant", "content": "Documento cargado con éxito. Ya puedes hacerle consultas :)"})
         return "", chatbot, gr.Dropdown(choices=lista_documentos_total, value=lista_documentos_total[0])
     except Exception as e:
         # Mensaje de error en formato de tupla
-        chatbot.append(("Cargando documento ...", f"Error al cargar documento: {str(e)}"))
+        chatbot.append({"role": "assistant", "content": f"Error al cargar documento: {str(e)}"})
         return "", chatbot, gr.Dropdown()
 
 # Función para procesar la consulta
@@ -86,47 +113,51 @@ def consultar_llm(question, doc_seleccionado, history):
 
     response = procesar_consulta(state, doc_seleccionado)
 
-    return response["answer"]
+    # Formatear la historia con 'role' y 'content' 
+    history.append({"role": "user", "content": question})
+    history.append({"role": "assistant", "content": response["answer"]})
+    
+    return history, question
 
-# Configurar la interfaz con autenticación
-# Configurar la interfaz con autenticación
+# Interfaz
 with gr.Blocks(css="styles.css") as demo:
     with gr.Tabs():
         with gr.TabItem("RAG Tradicional"):
             ### Primera Fila
             with gr.Row() as row_one:
                 # Referencias encontradas
-                with gr.Column(visible=False) as reference_bar:
-                    ref_output = gr.Markdown()
+                # with gr.Column(visible=False) as reference_bar:
+                #    ref_output = gr.Markdown()
                 # Respuesta de chatbot
                 with gr.Column() as chatbot_output:
                     chatbot = gr.Chatbot(
                         [],
                         elem_id="chatbot",
                         height=500, 
-                        avatar_images=["images/iruma.jpg", "images/openai.png"]
+                        avatar_images=["images/iruma.jpg", "images/openai.png"],
+                        type="messages"
                     )
             ### Segunda Fila | Caja para ingresar el query
             with gr.Row() as row_two:
                 input_txt = gr.Textbox(
                     lines=4,
                     scale=8,
-                    placeholder="Ingresa un texto y presiona Enter o carga un archivo Word o PDF.",
+                    placeholder="Ingresa un texto y clickea Submit o carga un archivo Word o PDF.",
                     container=False,
                 )
             ### Tercera Fila | Caja de botones
             with gr.Row() as row_three:
                 text_submit_btn = gr.Button(value="Submit")
                 sidebar_state = gr.State(False)
-                btn_toggle_sidebar = gr.Button(value="Referencias")
+                #btn_toggle_sidebar = gr.Button(value="Referencias")
                 upload_btn = gr.UploadButton(
                     "📁 Cargar archivos", file_types=[
                         '.pdf',
                         '.docx'
                     ],
                     file_count="multiple")
-                temperature_bar = gr.Slider(minimum=0, maximum=1, value=0, step=0.1, scale=0.5, label="Temperatura", info="Escoge entre 0 y 1")
-                rag_with_dropdown = gr.Dropdown(label="Selecciona documento:", choices=lista_documentos_iniciales, value=lista_documentos_iniciales[0])
+                temperature_bar = gr.Slider(minimum=0, maximum=1, value=0, step=0.1, scale=1, label="Temperatura", info="Escoge entre 0 y 1")
+                rag_with_dropdown = gr.Dropdown(label="Selecciona documento:", scale=2, choices=lista_documentos_iniciales, value=lista_documentos_iniciales[0])
                 clear_button = gr.ClearButton([input_txt, chatbot])
 
                 # Procedimientos
@@ -139,20 +170,22 @@ with gr.Blocks(css="styles.css") as demo:
 
                 txt_msg = input_txt.submit(
                     fn=consultar_llm,
-                    inputs=[chatbot, input_txt, rag_with_dropdown, temperature_bar],
-                    outputs=[input_txt,chatbot, ref_output],
+                    inputs=[input_txt, rag_with_dropdown, chatbot],
+                    outputs=[chatbot, input_txt],
                     queue=False
                 ).then(
                     lambda: gr.Textbox(interactive=True), None, [input_txt], queue=False
                 )
 
-                txt_msg = text_submit_btn.click(
-                    fn=procesar_consulta, 
-                    inputs=[chatbot, input_txt,rag_with_dropdown, temperature_bar],
-                    outputs=[input_txt, chatbot, ref_output],
+                text_submit_btn.click(
+                    fn=consultar_llm,
+                    inputs=[input_txt, rag_with_dropdown, chatbot],
+                    outputs=[chatbot, input_txt],
                     queue=False
                 ).then(
                     lambda: gr.Textbox(interactive=True), None, [input_txt], queue=False
                 )
 
-demo.launch()
+demo.launch(
+    share=False
+)
