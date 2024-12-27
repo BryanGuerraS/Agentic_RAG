@@ -17,7 +17,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_cohere import CohereEmbeddings
 from langchain_chroma import Chroma
 
-def cargar_documentos_en_chroma_db(directory):
+def cargar_documentos_en_chroma_db(directory, persist_directory):
     """
     Carga un documento en ChromaDB, dividiéndolo en fragmentos, creando embeddings y almacenandolo en la base de vectores.
 
@@ -27,7 +27,7 @@ def cargar_documentos_en_chroma_db(directory):
     # Cargar documentos
     lista_documentos = []
     contador_doc = 0
-    
+
     # Recorrer archivos en el directorio
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
@@ -46,8 +46,8 @@ def cargar_documentos_en_chroma_db(directory):
         # Cargar el archivo
         data = loader.load()
         print("N° documentos cargados:", contador_doc)
-        print(data)
-        lista_documentos.extend(data)
+        lista_documentos.append(filename)
+        print(lista_documentos)
 
     # Dividir el contenido en fragmentos
     text_splitter = RecursiveCharacterTextSplitter(
@@ -63,10 +63,11 @@ def cargar_documentos_en_chroma_db(directory):
         collection_name   = "documentos",
         documents         = all_splits, 
         embedding         = CohereEmbeddings(model="embed-multilingual-v2.0"), 
-        persist_directory = './chroma_langchain_db'
+        persist_directory = persist_directory
     )
     
     #print(vector_store.similarity_search(query = "Quien es Zara?", k=3)) # Solo para test
     print("N° vectores en vector_store:", vector_store._collection.count(), "\n\n")
-    print("Documentos cargados con éxito en ChromaDB.")
+
+    return lista_documentos
 
