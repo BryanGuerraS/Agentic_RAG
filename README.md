@@ -1,5 +1,5 @@
 # 🚀 RAG Tradicional con Langchain y Gradio🌟
-¡Bienvenido al proyecto! 🎉 Este repositorio contiene una implementación de una API que utiliza Gradio para procesar preguntas, buscar texto relevante y generar respuestas utilizando un modelo de lenguaje grande (LLM). La aplicación se integra con Cohere para la generación de embeddings, ChromaDB para la búsqueda de similitudes y Gradio como interfaz para seleccionar el documento y realizar consultas.
+¡Bienvenido al proyecto! 🎉 Este repositorio contiene una implementación de una API que utiliza **Gradio** para procesar preguntas, buscar texto relevante y generar respuestas utilizando un modelo de lenguaje grande (LLM). La aplicación se integra con **Cohere** para la generación de embeddings, **ChromaDB** para la búsqueda de similitudes y **Gradio** como interfaz para seleccionar el documento y realizar consultas.
 
 ## 🧠 Principales Insights o Mejoras del Proyecto
 - **Framework de Langchain y Cohere para el procesamiento de consultas**: Langchain y Cohere se emplean para el procesamiento avanzado de consultas, optimizando la interacción con los documentos y generando respuestas precisas basadas en el contenido cargado.
@@ -57,7 +57,7 @@ source env/bin/activate  # En Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Crea un archivo .env en la raíz del proyecto con las siguientes claves:
+3. Crea un archivo **.env** en la raíz del proyecto con las siguientes claves:
 ```console
 LANGCHAIN_API_KEY=tu_clave_aqui
 COHERE_API_KEY=tu_clave_aqui
@@ -91,7 +91,6 @@ docker run -p 8000:8000 rag_gradio
 - Permite cargar archivos nuevos y cambiar el documento seleccionado.
 ![Ejemplo_02](images/img_example_02.jpg)
 
-```
 
 ## 📖 Documentación adicional
 - Docker: Este proyecto incluye un archivo Dockerfile que permite desplegar la API rápidamente en un contenedor.
